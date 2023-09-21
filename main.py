@@ -1,5 +1,4 @@
 import requests
-import json
 from telebot import TeleBot, types
 
 # Инициализация бота
