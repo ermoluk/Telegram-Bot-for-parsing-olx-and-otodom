@@ -7,9 +7,8 @@ pars.py parses
 
 1. first you need to install all the necessary libraries
 
-   pip3 install requests
-   pip3 install pyTelegramBotAPI
+   pip install -r requirements.txt
 
-2. Insert your token
+2. Insert your token in setup.py
 
-   bot = TeleBot('Your token here')
+3. When rebooting the bot, everyone should start over with the /start command
