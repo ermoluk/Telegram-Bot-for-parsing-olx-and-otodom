@@ -3,7 +3,6 @@ import json
 import os
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import re
 
 # Определите город, минимальную и максимальную цену
 city = "Krakow"
@@ -72,6 +71,8 @@ def find_img_for_otodom(link):
     price = price.get_text(strip=True) if price else ''
 
     img_tags = soup.find_all('img')
+
+    print(img_tags)
 
     for img_tag in img_tags:
         src_value = img_tag.get('src')

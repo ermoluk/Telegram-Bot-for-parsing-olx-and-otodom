@@ -1,3 +1,5 @@
-telebot==0.0.3
-beautifulsoup4==4.10.0
-requests==2.26.0
+telebot
+requests
+bs4
+urllib3
+beautifulsoup4

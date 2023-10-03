@@ -6,7 +6,7 @@ def run_program():
     while True:
         try:
             # Здесь вызывается ваша программа
-            subprocess.run([sys.executable, "main_bot.py"])
+            subprocess.run([sys.executable, "bot.py"])
         except Exception as e:
             print(f"Произошла ошибка: {e}")
             # Ждем некоторое время перед повторным запуском (например, 5 секунд)
