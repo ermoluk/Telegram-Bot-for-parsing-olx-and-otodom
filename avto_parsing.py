@@ -1,49 +1,47 @@
+# Import necessary libraries and modules
 from telebot import TeleBot, types
 import os
 import json
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urljoin
-from setup import token
+from setup import token  # Assuming setup.py contains token variable
 import time
 
+# Initialize TeleBot with the provided token
 bot = TeleBot(token)
 
+# Define the folder path to store JSON data
 folder_path = 'JSON_DATA'
 
+# Initialize dictionaries to store user data and new links
 users = {}
-
 users_new_link = []
 
+# Define lists of new links and base URLs for OLX and Otodom
 new_links = []
-
 base_url_olx = 'https://olx.pl'
 base_url_otodom = 'https://www.otodom.pl'
 
-
+# Define user-agent header for requests
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36"
 }
 
-#bot.send_message(558068766, "Привет! Это ваш бот. Я могу отправлять сообщения без вашего нового сообщения.")
-
+# Function to upload user data from a JSON file
 def json_upload():
-
-    # Указываем путь к файлу JSON данных
     file_name = os.path.join(folder_path, 'user_data.json')
-
-    # Открываем файл и загружаем словарь
     with open(file_name, 'r') as file:
         users = json.load(file)
-
     return users
 
+# Function to perform initial parsing and retrieve links for OLX and Otodom
 def ferst_pars(city, min_price, max_price, r):
     numbers_r = ["one", "two", "three", "four"]
-    r_otodom = numbers_r[int(r)-1]
+    r_otodom = numbers_r[int(r) - 1]
     link_user_a = []
 
-    # Определите ссылки для OLX и Otodom
+    # Define URLs for OLX and Otodom based on user input
     urls = [
         f'https://www.olx.pl/nieruchomosci/mieszkania/wynajem/{city}/?search%5Bfilter_float_price:from%5D={min_price}&search%5Bfilter_float_price:to%5D={min_price}0&search%5Bfilter_enum_rooms%5D%5B0%5D={r_otodom}',
         f'https://www.otodom.pl/pl/wyniki/wynajem/mieszkanie,{r_otodom}-pokoje/mazowieckie/{city}/{city}/{city}?distanceRadius=0&limit=36&priceMin={min_price}&priceMax={max_price}&by=DEFAULT&direction=DESC&viewType=listing'
@@ -62,7 +60,7 @@ def ferst_pars(city, min_price, max_price, r):
                     link_user_a.append(href_value)
 
                 a = 2
-            
+
             for a in range(5):
                 users_new_link.append(link_user_a[a])
 
@@ -76,13 +74,13 @@ def ferst_pars(city, min_price, max_price, r):
                     link_user_a.append(urljoin(base_url_otodom, href_value))
                 else:
                     link_user_a.append(href_value)
-            
+
             for a in range(5):
                 users_new_link.append(link_user_a[a])
-            
-    
+
     return users_new_link
 
+# Function to send messages to users with information about parsed results
 def send_message(result_array, user_id):
     for i in range(len(result_array)):
         response = requests.get(result_array[i], headers=headers)
@@ -91,19 +89,15 @@ def send_message(result_array, user_id):
 
         print(result_array[i])
 
-        # Проверяем, начинается ли URL с "https://www.olx.pl"
+        # Check if the URL starts with "https://www.olx.pl"
         if i > 1 and i < 5:
             price_elem = soup.find('h3', {'class': 'css-1twl9tf'})
             title_elem = soup.find('h1', {'data-cy': 'ad_title'})
             first_image_elem = soup.find('img', {'class': 'css-1bmvjcs'})
 
             if first_image_elem is not None:
-                # If the tag was found, get the value of the 'src' attribute
                 first_image = first_image_elem.get('src')
-
-                # Check if the 'src' attribute exists
                 if first_image is not None:
-                    # Print or use the 'src' value
                     print(first_image)
                 else:
                     print("The 'src' attribute is not present in the 'img' tag.")
@@ -118,22 +112,20 @@ def send_message(result_array, user_id):
             img_tags = soup.find_all('img')
             first_image = next((img_tag.get('src') for img_tag in img_tags if img_tag.get('src') and img_tag.get('src').startswith("https://ireland.apollo.olxcdn.com")), None)
 
-        # Extract text content
         price_text = price_elem.get_text(strip=True) if price_elem else ''
         title_text = title_elem.get_text(strip=True) if title_elem else ''
 
-        # Check if elements are found
         if price_text and title_text:
             bot.send_photo(user_id, first_image)
             bot.send_message(user_id, f"{title_text} \n\n {price_text} \n\n [link]({result_array[i]})")
 
+# Main function to run the bot continuously
 def main():
     while True:
         users = json_upload()
 
-        # Получение всех внешних ключей
         outer_keys = users.keys()
-    
+
         for user_key, user_value in users.items():
             urls_users = user_value['avto']
             city = user_value['city']
@@ -145,7 +137,8 @@ def main():
                 result_array = ferst_pars(city, min_price, max_price, r)
 
                 send_message(result_array, user_key)
-        time.sleep(1800) 
+        time.sleep(1800)
 
+# Run the main function if the script is executed
 if __name__ == "__main__":
     main()

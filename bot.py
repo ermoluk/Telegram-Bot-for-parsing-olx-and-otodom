@@ -1,39 +1,39 @@
 import json
 import os
 from telebot import TeleBot, types
-from main_parsing import main
+from main_parsing import main  # Assuming main_parsing contains the main logic for data parsing
 import re
-from setup import token
+from setup import token  # Assuming token is defined in the setup module
 
-# Инициализация бота
+# Initialize the Telegram bot with the provided token
 bot = TeleBot(token)
 
-# Список городов Польши
+# List of cities in Poland
 cities = ['Warszawa', 'Krakow', 'Wroclaw', 'Poznan', 'Gdansk', 'Lodz', 'Katowice', 'Bialystok', 'Czestochowa']
 
-# Список вариантов количества комнат
+# List of room options
 rooms = ['1', '2', '3']
 
-# Словарь параметров поиска
+# Dictionary for search parameters
 params = {}
 
 pars_data = {}
 
 name_a = []
 
-# Язык по умолчанию
+# Default language
 default_lang = 'EN'
 
-# Язык, выбранный пользователем
+# Language selected by the user
 lang = {}
 
-# Указываем путь к папке, где будем хранить файлы JSON данных
+# Path to the folder where JSON data files are stored
 folder_path = 'JSON_DATA'
 
-# Список языков
-languages = ['EN','RU','UA','PL']
+# List of supported languages
+languages = ['EN', 'RU', 'UA', 'PL']
 
-# Словарь для переводов
+# Dictionary for translations
 translations = {
     'EN': {
         'language_processing_': 'Search for housing 🔎',
@@ -105,53 +105,47 @@ translations = {
         'retrieval': 'Powtórz wyszukiwanie 🔁',
         'select_setting': 'Wybierz ustawienie',
         'automatic_check': 'Automatyczna kontrola',
-        'reboot': 'Bot został wstępnie załadowany, aby działał poprawnie, należy uruchomić polecenie ( /start )'
+        'reboot': 'Bot został wcześniej załadowany, aby poprawnie działał, uruchom komendę ( /start )'
     },
 }
 
+# Function to load JSON data from a file
 def json_upload3():
-
-    # Указываем путь к файлу JSON данных
     file_name = os.path.join(folder_path, 'user_data.json')
-
-    # Открываем файл и загружаем словарь
     with open(file_name, 'r') as file:
         users = json.load(file)
-
     return users
 
+# Load user data
 users = json_upload3()
 
-# Получение всех внешних ключей
+# Get all external keys
 outer_keys = users.keys()
-    
+
+# Send a reboot message to all users
 for user_key, user_value in users.items():
-     bot.send_message(user_key, translations['EN']['reboot'])
+    bot.send_message(user_key, translations['EN']['reboot'])
 
+# Function to load JSON data
 def json_upload():
-    # Указываем путь к файлу JSON данных
     file_name = os.path.join(folder_path, 'user_data.json')
-
-    # Открываем файл и загружаем словарь
     with open(file_name, 'r') as file:
         params_old = json.load(file)
-
     return params_old
 
+# Function to write a dictionary to a JSON file
 def jsono(params):
     folder_path = 'JSON_DATA'
     file_name = os.path.join(folder_path, 'user_data.json')
-    
-    # Запишите словарь в файл JSON
     with open(file_name, 'w') as file:
         json.dump(params, file)
 
-# Обработчик команды start
+# Handler for the /start command
 @bot.message_handler(commands=['start'])
 def start(message):
     global user_id
     user_id = message.from_user.id
-
+    # Initialize user parameters
     params[user_id] = {
         'city': '',
         'rooms': '',
@@ -162,8 +156,7 @@ def start(message):
         'avto_name': '',
         'avto_pars_time': 0
     }
-    
-    # Отправка меню для начала поиска
+    # Send language selection menu
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     for language in languages:
         item = types.KeyboardButton(language)
@@ -172,7 +165,7 @@ def start(message):
     params[user_id]['chat.id'] = ch
     bot.send_message(message.chat.id, 'Please select your language', reply_markup=markup)
 
-# Обработчик языка
+# Language handler
 @bot.message_handler(func=lambda message: message.text == "EN" or message.text == "RU" or message.text == "UA" or message.text =="PL")
 def language_processing(message):
     user_id = message.from_user.id
@@ -187,11 +180,11 @@ def language_processing(message):
     bot.send_message(message.chat.id, translations[lang[user_id]]['greeting'], reply_markup=markup)
 
 
-# Cмена языка
+# Language change
 @bot.message_handler(func=lambda message: message.text == translations[lang[user_id]]['language_change'])
 def start(message):
         user_id = message.from_user.id
-        # Отправка меню для начала поиска
+        # Sending a menu to start a search
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         for language in languages:
             item = types.KeyboardButton(language)
@@ -199,12 +192,12 @@ def start(message):
         bot.send_message(message.chat.id, 'Please select your language', reply_markup=markup)
         user_id = message.from_user.id
 
-# Новый поиск
-# Обработчик кнопки "Поиск жилья"
+# New search
+# Handler for the "Search for accommodation" button
 @bot.message_handler(func=lambda message: message.text == translations[lang[user_id]]['language_processing_'])
 def search(message):
         user_id = message.from_user.id
-        # Отправляем список городов и просим пользователя выбрать
+        # Send a list of cities and ask the user to select
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         for city in cities:
             item = types.KeyboardButton(city)
@@ -212,15 +205,15 @@ def search(message):
         bot.send_message(message.chat.id, translations[lang[user_id]]['choose_city'], reply_markup=markup)
         user_id = message.from_user.id
 
-# Обработчик выбора города
+# City selection handler
 @bot.message_handler(func=lambda message: message.text in cities)
 def choose_rooms(message):
         user_id = message.from_user.id
-        # Запоминаем выбранный город
+        #Memorize the selected city
         params[user_id]['city'] = message.text
         print(params[user_id]['city'])
 
-        # Отправляем список вариантов количества комнат и просим пользователя выбрать
+        #Send a list of room count options and ask the user to select
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         for room in rooms:
             item = types.KeyboardButton(room)
@@ -228,28 +221,28 @@ def choose_rooms(message):
         bot.send_message(message.chat.id, translations[lang[user_id]]['choose_rooms'], reply_markup=markup)
         user_id = message.from_user.id
 
-# Обработчик выбора количества комнат
+# Handler for selecting the number of rooms
 @bot.message_handler(func=lambda message: message.text in rooms)
 def enter_min_price(message):
         user_id = message.from_user.id
-        # Запоминаем выбранное количество комнат
+        # Memorize the selected number of rooms
         params[user_id]['rooms'] = message.text
 
-        # Запрос минимальной цены
+        # minimum price request
         bot.send_message(message.chat.id, translations[lang[user_id]]['enter_min_price'])
         user_id = message.from_user.id
 
-# Обработчик ввода минимальной цены
+# Minimum price input handler
 @bot.message_handler(func=lambda message: message.text.isdigit())
 def enter_max_price(message):
         user_id = message.from_user.id
-        # Запоминаем минимальную цену
+        # Memorize the minimum price
         params[user_id]['price_min'] = int(message.text)
 
-        # Запрос максимальной цены
+        # Request for maximum price
         bot.send_message(message.chat.id, translations[lang[user_id]]['enter_max_price'])
 
-        # Переходим к следующему шагу - ввод максимальной цены
+        # Move on to the next step - entering the maximum price
         bot.register_next_step_handler(message, start_search)
         user_id = message.from_user.id
 
@@ -259,11 +252,11 @@ def enter_max_price1(message):
         # Запрос максимальной цены
         bot.send_message(message.chat.id, translations[lang[user_id]]['enter_max_price'])
 
-        # Переходим к следующему шагу - ввод максимальной цены
+        # Move on to the next step - entering the maximum price
         bot.register_next_step_handler(message, start_search)
         user_id = message.from_user.id
 
-# Обработчик ввода максимальной цены
+# Maximum price entry handler
 def start_search(message):
         user_id = message.from_user.id
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -277,10 +270,10 @@ def start_search(message):
         else:
             enter_max_price1()
 
-        # Запоминаем максимальную цену
+        # Remembering the maximum price
         params[user_id]['price_max'] = int(message.text)
 
-        # Выполняем поиск
+        # Searching
 
         city = params[user_id]['city']
         min_price = params[user_id]['price_min']
@@ -291,10 +284,10 @@ def start_search(message):
 
         user_id = message.from_user.id
 
-        # Указываем путь к файлу JSON данных
+        # Specify the path to the JSON data file
         file_name = os.path.join(folder_path, 'parsed_data.json')
 
-        # Открываем файл и загружаем словарь
+        #Open the file and load the dictionary
         with open(file_name, 'r') as file:
             data_dict = json.load(file)
 
@@ -316,10 +309,8 @@ def start_search(message):
 
         def update_or_add( json_old, key, params):
             if key in json_old:
-                # Обновление существующего ключа
                 json_old[key].update(params)
             else:
-                # Добавление нового ключа
                 json_old[key] = params
 
         for key, data in params.items():
@@ -328,7 +319,6 @@ def start_search(message):
 
         jsono(json_old)
 
-# Обработчик ввода максимальной цены
 @bot.message_handler(func=lambda message: message.text == translations[lang[user_id]]['retrieval'])
 def retrieval(message):
         user_id = message.from_user.id
@@ -349,10 +339,8 @@ def retrieval(message):
 
         user_id = message.from_user.id
 
-        # Указываем путь к файлу JSON данных
         file_name = os.path.join(folder_path, 'parsed_data.json')
 
-        # Открываем файл и загружаем словарь
         with open(file_name, 'r') as file:
             data_dict = json.load(file)
 
@@ -374,10 +362,8 @@ def retrieval(message):
 
         def update_or_add( json_old, key, params):
             if key in json_old:
-                # Обновление существующего ключа
                 json_old[key].update(params)
             else:
-                # Добавление нового ключа
                 json_old[key] = params
 
         for key, data in params.items():
@@ -387,7 +373,7 @@ def retrieval(message):
         jsono(json_old)
         
 
-# Настроики
+# settings
 @bot.message_handler(func=lambda message: message.text == translations[lang[user_id]]['settings'])
 def settings(message):
         user_id = message.from_user.id
@@ -404,14 +390,12 @@ def settings(message):
         user_id = message.from_user.id
 
 
-# Обработчик кнопки "Настройки поиска"
+# Handler of the "Search Settings" button
 @bot.message_handler(func=lambda message: message.text == translations[lang[user_id]]['search_settings'])
 def reset_search(message):
-        user_id = message.from_user.id
-        # Сбрасываем параметры поиска
+        user_id = message.from_user.i
         params[user_id].clear()
 
-        # Отправляем меню для начала нового поиска
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         item = types.KeyboardButton(translations[lang[user_id]]['language_processing_'])
         markup.add(item)
@@ -435,10 +419,8 @@ def automatic_check(message):
 
     print(params[user_id]['avto_name'])
 
-    # Указываем путь к файлу JSON данных
     file_name = os.path.join(folder_path, 'user_data.json')
 
-    # Открываем файл и загружаем словарь
     with open(file_name, 'r') as file:
         data_dict = json.load(file)
 
@@ -446,10 +428,8 @@ def automatic_check(message):
 
     def update_or_add( json_old, key, params):
         if key in json_old:
-            # Обновление существующего ключа
             json_old[key].update(params)
         else:
-            # Добавление нового ключа
             json_old[key] = params
 
     for key, data in params.items():

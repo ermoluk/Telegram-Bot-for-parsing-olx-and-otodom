@@ -4,41 +4,41 @@ import os
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-# Определите город, минимальную и максимальную цену
+# Define the city, minimum, and maximum price
 city = "Krakow"
 min_price = "400"
 max_price = "2000"
 
-# Определите количество комнат для OLX и Otodom
+# Define the number of rooms for OLX and Otodom
 r_olx = "four"
 r_otodom = "4"
 
-src_img={}
+src_img = {}
 
-# Инициализация глобальных переменных
+# Initialize global variables
 b = 0
 a = 0
 
 r = 2
 
-# Укажите путь к папке для хранения данных JSON
+# Specify the path to the folder for storing JSON data
 folder_path = 'JSON_DATA'
 
-# Создайте словарь для хранения данных
+# Create a dictionary to store data
 data_dict = {}
 
-# Определите базовый URL для OLX
+# Define the base URL for OLX and Otodom
 base_url_olx = 'https://olx.pl'
 base_url_otodom = 'https://www.otodom.pl'
 
 descriptions = ""
 
-# Определите заголовок user-agent
+# Define the user-agent header
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36"
 }
 
-# Функция для поиска всех элементов на странице (OLX или Otodom)
+# Function to find all elements on the page (OLX or Otodom)
 def find_elements(a, soup):
     if a == 0:
         price = soup.find_all('p', {'data-testid': 'ad-price'})
@@ -47,7 +47,6 @@ def find_elements(a, soup):
         img = soup.find_all('div', {'class': 'css-pn1izb'})
         metr = soup.find_all('span', {'class': 'css-643j0o'})
         a = 1
-        
 
         return price, title, link, img, metr
     else:
@@ -60,7 +59,8 @@ def find_elements(a, soup):
         print(price)
 
         return price, title, link, img, metr
-    
+
+
 def find_img_for_otodom(link):
     response = requests.get(link, headers=headers)
     html_code = response.text
@@ -78,18 +78,18 @@ def find_img_for_otodom(link):
         src_value = img_tag.get('src')
         if src_value and src_value.startswith("https://ireland.apollo.olxcdn.com"):
             first_image = src_value
-            break 
+            break
 
     return first_image, price
 
 
-# Основная функция для скрапинга данных
+# Main function for web scraping
 def main(city, min_price, max_price, r):
-    global b  # Объявить b как глобальную переменную
+    global b  # Declare b as a global variable
     numbers_r = ["one", "two", "three", "four"]
-    r_otodom = numbers_r[int(r)-1]
+    r_otodom = numbers_r[int(r) - 1]
 
-    # Определите ссылки для OLX и Otodom
+    # Define links for OLX and Otodom
     urls = [
         f'https://www.olx.pl/nieruchomosci/mieszkania/wynajem/{city}/?search%5Bfilter_float_price:from%5D={min_price}&search%5Bfilter_float_price:to%5D={min_price}0&search%5Bfilter_enum_rooms%5D%5B0%5D={r_otodom}',
         f'https://www.otodom.pl/pl/wyniki/wynajem/mieszkanie,{r_otodom}-pokoje/mazowieckie/{city}/{city}/{city}?distanceRadius=0&limit=36&priceMin={min_price}&priceMax={max_price}&by=DEFAULT&direction=DESC&viewType=listing'
@@ -113,15 +113,15 @@ def main(city, min_price, max_price, r):
                                 image_src = img_tag["srcset"]
                                 result = image_src.split(' ', 1)[0]
                                 result1 = image_src.split(';', 1)[0]
-                            else: 
+                            else:
                                 result1 = img_tag["src"]
-                                
+
                         except KeyError:
-                            # Обработать случай, если атрибут 'srcset' отсутствует
+                            # Handle the case when the 'srcset' attribute is missing
                             result = ""
                             result1 = ""
                     else:
-                        # Обработать случай, если тег 'img' не найден
+                        # Handle the case when the 'img' tag is not found
                         result = ""
                         result1 = ""
                 else:
@@ -140,7 +140,7 @@ def main(city, min_price, max_price, r):
 
                 if a == 0:
                     product_price = price[i].text.strip()
-                else: 
+                else:
                     product_price = price
 
                 if a == 0:
@@ -162,23 +162,23 @@ def main(city, min_price, max_price, r):
                 b = b + 1
 
     except requests.exceptions.RequestException as e:
-        print("Произошла ошибка при выполнении запроса:", e)
+        print("An error occurred while making a request:", e)
 
-    # Создайте папку, если её нет
+    # Create a folder if it does not exist
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
-    # Определите имя файла для сохранения данных
+    # Define the file name for saving data
     file_name = os.path.join(folder_path, 'parsed_data.json')
 
     try:
-        # Запишите словарь в файл JSON
+        # Write the dictionary to a JSON file
         with open(file_name, 'w') as file:
             json.dump(data_dict, file)
     except Exception as ex:
-        print("Ошибка при сохранении данных в файл:", ex)
-    
+        print("Error saving data to a file:", ex)
+
     return data_dict
 
 
-#main(city, min_price, max_price, r)
+# main(city, min_price, max_price, r) Remove all comments and create your comments in English
