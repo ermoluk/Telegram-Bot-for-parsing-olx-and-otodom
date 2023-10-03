@@ -1,4 +1,5 @@
-# RielPl_bot
+# Telegram-Bot-for-parsing-olx-and-otodom
+
 Telegram bot that parses Polish real estate sites and jacks advertisements for housing rentals at their request
 
 <h1>File description:</h1> 
@@ -9,6 +10,8 @@ pars.py parses
 
    pip install -r requirements.txt
 
-2. Insert your token in setup.py
+2. You will need to run the main.py project file
 
-3. When rebooting the bot, everyone should start over with the /start command
+3. Insert your token in setup.py
+
+4. When rebooting the bot, everyone should start over with the /start command
