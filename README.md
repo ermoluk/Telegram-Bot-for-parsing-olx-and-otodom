@@ -12,6 +12,8 @@ pars.py parses
 
 2. You will need to run the main.py project file
 
-3. Insert your token in setup.py
+3. Run the avto_parsing.py
 
-4. When rebooting the bot, everyone should start over with the /start command
+4. Insert your token in setup.py
+
+5. When rebooting the bot, everyone should start over with the /start command
